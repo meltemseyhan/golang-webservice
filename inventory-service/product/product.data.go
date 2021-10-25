@@ -3,6 +3,7 @@ package product
 import (
 	"context"
 	"database/sql"
+	"strings"
 	"time"
 
 	"github.com/meltemseyhan/inventoryservice/database"
@@ -77,6 +78,59 @@ func getTopTenProducts() ([]Product, error) {
 	quantityOnHand,
 	productName
 	FROM products ORDER BY quantityOnHand DESC LIMIT 10`)
+	if err != nil {
+		return nil, err
+	}
+	defer results.Close()
+
+	products := make([]Product, 0)
+	for results.Next() {
+		var nextProduct Product
+		results.Scan(&nextProduct.ProductID, &nextProduct.Manufacturer, &nextProduct.Sku, &nextProduct.Upc, &nextProduct.PricePerUnit, &nextProduct.QuantityOnHand, &nextProduct.ProductName)
+		products = append(products, nextProduct)
+	}
+	return products, nil
+}
+
+func searchForProductData(filter *ProductReportFilter) ([]Product, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+	defer cancel()
+
+	queryParams := make([]interface{}, 6)
+
+	if filter.NameFilter != "" {
+		queryParams[0] = 1
+		queryParams[1] = "%" + strings.ToLower(filter.NameFilter) + "%"
+	} else {
+		queryParams[0] = 0
+		queryParams[1] = ""
+	}
+	if filter.ManufacturerFilter != "" {
+		queryParams[2] = 1
+		queryParams[3] = "%" + strings.ToLower(filter.ManufacturerFilter) + "%"
+	} else {
+		queryParams[2] = 0
+		queryParams[3] = ""
+	}
+	if filter.SKUFilter != "" {
+		queryParams[4] = 1
+		queryParams[5] = "%" + strings.ToLower(filter.SKUFilter) + "%"
+	} else {
+		queryParams[4] = 0
+		queryParams[5] = ""
+	}
+
+	results, err := database.DbConn.QueryContext(ctx, `SELECT productId, 
+	LOWER(manufacturer), 
+	LOWER(sku),
+	upc,
+	pricePerUnit,
+	quantityOnHand,
+	LOWER(productName)
+	FROM products WHERE (0=? OR productName like ?)
+	AND (0=? OR manufacturer like ?)
+	AND (0=? OR sku like ?)`, queryParams...)
+
 	if err != nil {
 		return nil, err
 	}

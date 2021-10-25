@@ -122,7 +122,9 @@ const productsBasePath = "products"
 func SetupRoutes(apiBasePath string) {
 	productListHandler := http.HandlerFunc(productsHandler)
 	productItemHandler := http.HandlerFunc(productHandler)
+	reportHandler := http.HandlerFunc(productReportHandler)
 	http.Handle(fmt.Sprintf("%s/%s", apiBasePath, productsBasePath), cors.Middleware(productListHandler))
 	http.Handle(fmt.Sprintf("%s/%s/", apiBasePath, productsBasePath), cors.Middleware(productItemHandler))
 	http.Handle("/websocket", http.HandlerFunc(productSocketHandler))
+	http.Handle(fmt.Sprintf("%s/%s/reports", apiBasePath, productsBasePath), cors.Middleware(reportHandler))
 }
