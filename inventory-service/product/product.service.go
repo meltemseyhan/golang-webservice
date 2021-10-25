@@ -124,4 +124,5 @@ func SetupRoutes(apiBasePath string) {
 	productItemHandler := http.HandlerFunc(productHandler)
 	http.Handle(fmt.Sprintf("%s/%s", apiBasePath, productsBasePath), cors.Middleware(productListHandler))
 	http.Handle(fmt.Sprintf("%s/%s/", apiBasePath, productsBasePath), cors.Middleware(productItemHandler))
+	http.Handle("/websocket", http.HandlerFunc(productSocketHandler))
 }
