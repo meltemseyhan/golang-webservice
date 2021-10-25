@@ -18,7 +18,11 @@ func productHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	product := getProduct(productID)
+	product, err := getProduct(productID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	if product == nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -46,7 +50,7 @@ func productHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		_, err = addOrUpdateProduct(updatedProduct)
+		err = updateProduct(updatedProduct)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -68,7 +72,12 @@ func productHandler(w http.ResponseWriter, r *http.Request) {
 func productsHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		productsJson, err := json.Marshal(getProductList())
+		productList, err := getProductList()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		productsJson, err := json.Marshal(productList)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -95,7 +104,7 @@ func productsHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		_, err = addOrUpdateProduct(newProduct)
+		_, err = insertProduct(newProduct)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
